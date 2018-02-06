@@ -1,7 +1,7 @@
-! Variable Declaration file for 2D Diffusion Problems
+! Variable Declaration file for 3D Diffusion Problems
 !
 ! Written by Matt Blomquist
-! Last Update: 2018-02-02 (YYYY-MM-DD)
+! Last Update: 2018-02-06 (YYYY-MM-DD)
 !
 ! This file defines the parameter and variable names used throughout
 ! the main2d function.
@@ -9,13 +9,13 @@
 ! Mesh parameters :: nodes in x, nodes in y, nodes in z
   integer :: m, n, l
   real(8) :: tol
-  parameter (m=3, n=3, l=1)
+  parameter (m=3, n=3, l=3)
   parameter (tol=1e-4)
 
 ! Define common values
-  real(8), dimension(m,n) :: Ap, Aw, Ae, As, An
-  real(8), dimension(m,n) :: b
-  common Ap, Aw, Ae, As, An, b
+  real(8), dimension(m,n,l) :: Ab, As, Aw, Ap, Ae, An, At
+  real(8), dimension(m,n,l) :: b
+  common Ab, As, Aw, Ap, Ae, An, At, b
 
 ! Define /media/ properties
   real(8) :: rho, k
@@ -30,21 +30,18 @@
   common /geometry/ dx, dy, dz, A_x, A_y, A_z
 
 ! Define /temperature/ variables
-  real(8), dimension(m,n) :: T
+  real(8), dimension(m,n,l) :: T
   common /temperature/ T
 
-  real(8), dimension(m,n) :: Sc_t, Sp_t
+  real(8), dimension(m,n,l) :: Sc_t, Sp_t
   common /temperature/ Sc_t, Sp_t
 
 ! Define /solver/ variables
-  real(8), dimension(m*n) :: x_initial, x_solution
-  common /solver/ x_initial, x_solution
-
   integer :: itr, maxit
   parameter (maxit=100)
-  common /solver/ itr
+  common /solver/ itr, maxit
 
 ! Define /convergence/ variables
   real(8) :: start_time, finish_time
-  real(8), dimension(maxit,3) :: residual
+  real(8), dimension(maxit,2) :: residual
   common /convergence/ start_time, finish_time, residual
