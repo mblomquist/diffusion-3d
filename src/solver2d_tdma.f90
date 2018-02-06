@@ -1,135 +1,313 @@
-! solver2d_tdma
+! solver3d_tdma
 !
 ! Written by Matt Blomquist
-! Last Update: 2018-02-05 (YYYY-MM-DD)
+! Last Update: 2018-02-06 (YYYY-MM-DD)
 !
-! This program solves a two-dimensional discretization problem utilizing a line-by-line
-! TDMA (tri-diagonal matrix algorithm). The algorithm sweeps from South to North then from
-! West to East.
+! This program solves a three-dimensional finite volume discretization problem
+! using the line-by-line tri-diagonal matrix algorithm.
+!
+! Definition of input arguments
+! Inputs:
+!   Ab, As, Aw, Ap, Ae, An, At :: These arrays represent the coefficients for adjacent nodes
+!   b :: This array represents the right-hand side of the equation Ax=b
+!   phi :: This value represents the appropriate solution array (pressure, velocity, temperature)
+!   m, n, l :: These values represent the number of nodes for i, j, and k for the phi value
+!   tol :: represents the solution tolerance
+!   maxit :: represents the maximum number of iterations of the BiCGStab Algorithm
+!
+! Outputs:
+!   phi :: on exit, this value contains the updated solution
+!   maxit :: on exit, this value contains the number of iterations of the BiCGStab algorithm
+!   tol :: on exit, this value represents the normalized residual
 
-subroutine solver2d_tdma(As, Aw, Ap, Ae, An, b, phi, m, n, tol, maxit)
+subroutine solver3d_tdma
 
-  ! Include mkl header
+  ! Define implicit
+  implicit none
+
+  ! Include mkl functions
   include "mkl.fi"
 
   ! Define input variables
-  integer, intent(in) :: m, n
-  integer, intent(in) :: maxit
-  real(8), intent(in) :: tol
-  real(8), dimension(m,n), intent(in) :: As, Aw, Ap, Ae, An, b
-  real(8), dimension(m,n), intent(inout) :: phi
+  integer, intent(in) :: m, n, l
+  integer, intent(inout) :: maxit
+  real(8), intent(inout) :: tol
+  real(8), dimension(m,n,l), intent(in) :: Ab, As, Aw, Ap, Ae, An, At, b
+  real(8), dimension(m,n,l), intent(inout) :: phi
 
   ! Define internal variables
-  integer :: i, j, k, itr
-  integer, dimension(5) :: A_distance
-  real(8) :: residual
-  real(8), dimension(m) :: bx_line 
+  integer :: i, j, k, itr_main, itr_inner
+  integer, dimension(7) :: A_distance
+
+  real(8) :: r_norm
+  real(8), dimension(m) :: bx_line
   real(8), dimension(n) :: by_line
-  real(8), dimension(m,n) :: x
-  real(8), dimension(m*n) :: x_compressed, b_compressed, Ax
-  real(8), dimension(m*n,5)
+  real(8), dimension(l) :: bz_line
+  real(8), dimension(m*n*l,7) :: A_values
+  real(8), dimension(m*n*l) :: x_compressed, b_values
 
-  ! Set temporary x value
-  x = phi
+  ! ----------------------------------------------------------------------------------------- !
+  ! -------------------------------------- Start TDMA --------------------------------------- !
+  ! ----------------------------------------------------------------------------------------- !
+  do itr_main = 1,maxit
 
-  ! Initilize b_line
-  bx_line = 0
-  by_line = 0
+    ! Start west to east loop
+    do itr_inner = 1,itr_main
+	  
+	  k = 1
 
-  ! Start TDMA Sweep Loop
-  do itr = 1,maxit
-
-    ! Iterate lines from South to North
-    do k = 1,itr
-
-      do i = 1,m
-	    do j = 1,n
-
-	      if (i .eq. 1) then
-		    by_line(j) = b(i,j)-An(i,j)*x(i+1,j)
-		  else if (i .eq. m) then
-		    by_line(j) = b(i,j)-As(i,j)*x(i-1,j)
+	  do j = 1,n
+	    
+		do i = 1,m
+		
+		  if (j .eq. 1) then
+		    bx_line(i) =
+		  elseif (j .eq. n) then
+		    bx_line(i) =
 		  else
-		    by_line(j) = b(i,j)-As(i,j)*x(i-1,j)-An(i,j)*x(i+1,j)
+		    bx_line(i) =
 		  end if
+		
+		end do
+
+	    call solver1d_tdma()
+
+	  end do
+
+	  do k = 2:l-1
+	    do j = 1,n
+	    
+		  do i = 1,m
+		
+		    if (j .eq. 1) then
+			  bx_line(i) =
+		    elseif (j .eq. n) then
+			  bx_line(i) =
+		    else
+			  bx_line(i) =
+		    end if
+		
+		  end do
+
+	      call solver1d_tdma()
+
+	    end do
+	  end do
+	  
+	  k = l
+
+	  do j = 1,n
+	    
+		do i = 1,m
+		
+		  if (j .eq. 1) then
+		    bx_line(i) =
+		  elseif (j .eq. n) then
+		    bx_line(i) =
+		  else
+		    bx_line(i) =
+		  end if
+		
+		end do
+
+	    call solver1d_tdma()
+
+	  end do
+
+	end do
+
+    ! Start south to north loop
+    do itr_inner = 1,itr_main
+
+	  i = 1
+
+	  do k = 1:l
+
+	    do j = 1:n
+
+		  if (k .eq. 1) then
+		    by_line(j) = 
+		  elseif (k .eq. l) then
+		    by_line(j) = 
+		  else
+		    by_line(j) = 
+		  end if
+
+		end do
+
+		call solver1d_tdma()
+
+	  end do
+
+	  do i = 2:m-1
+
+	  	do k = 1:l
+
+	      do j = 1:n
+
+		    if (k .eq. 1) then
+		      by_line(j) = 
+		    elseif (k .eq. l) then
+		      by_line(j) = 
+		    else
+		      by_line(j) = 
+		    end if
+
+  		  end do
+
+		  call solver1d_tdma()
 
 	    end do
 
-	    call solver1d_tdma(Aw(i,:), Ap(i,:), Ae(i,:), by_line, x(i,:), m)
-
 	  end do
 
-    end do
+	  i = m
 
-    ! Iterate lines from West to East
-    do k = 1,itr
+	  do k = 1:l
 
-      do j = 1,n
-	    do i = 1,m
+	    do j = 1:n
 
-	      if (j .eq. 1) then
-		    bx_line(i) = b(i,j)-Ae(i,j)*x(i,j+1)
-		  else if (j .eq. n) then
-		    bx_line(i) = b(i,j)-Aw(i,j)*x(i,j-1)
+		  if (k .eq. 1) then
+		    by_line(j) = 
+		  elseif (k .eq. l) then
+		    by_line(j) = 
 		  else
-		    bx_line(i) = b(i,j)-Aw(i,j)*x(i,j-1)-Ae(i,j)*x(i,j+1)
+		    by_line(j) = 
 		  end if
 
+		end do
+
+		call solver1d_tdma()
+
 	  end do
 
-	  call solver1d_tdma(As(:,j), Ap(:,j), An(:,j), bx_line, x(:,j), m)
+	end do
 
-    end do
+    ! Start bottom to top loop
+    do itr_inner = 1,itr_main
 
-    ! Check Residual
-    A_distance = (/-m, -1, 0, 1, m/)
+	  j = 1
+
+	  do i = 1,m
+
+	    do k = 1,l
+
+		  if (i .eq. 1) then
+		    bz_line(k) = 
+		  elseif (i .eq. m) then
+		    bz_line(k) = 
+		  else
+		    bz_line(k) = 
+		  end if
+
+		end do
+
+		call solver1d_tdma()
+
+	  end do
+
+	  do j = 2:n-1
+
+	    do i = 1,m
+
+	      do k = 1,l
+
+		    if (i .eq. 1) then
+		      bz_line(k) = 
+		    elseif (i .eq. m) then
+		      bz_line(k) = 
+		    else
+		      bz_line(k) = 
+		    end if
+
+		  end do
+
+		  call solver1d_tdma()
+
+	    end do
+
+	  end do
+
+	  j = n
+
+	  do i = 1,m
+
+	    do k = 1,l
+
+		  if (i .eq. 1) then
+		    bz_line(k) = 
+		  elseif (i .eq. m) then
+		    bz_line(k) = 
+		  else
+		    bz_line(k) = 
+		  end if
+
+		end do
+
+		call solver1d_tdma()
+
+	  end do
+
+	end do
+
+    ! ----------------------------------------------------------------------------------------- !
+    ! ----------------------------------- Check Convergence ----------------------------------- !
+    ! ----------------------------------------------------------------------------------------- !
 
     ! Convert values into CDS Format
-    do j = 1,n
-      do i = 1,m
+    do k = 1,l
+      do j = 1,n
+        do i = 1,m
 
-        ! Compress stiffness matrix values
-        A_compressed(i+(j-1)*m,1) = As(i,j)
-        A_compressed(i+(j-1)*m,2) = Aw(i,j)
-        A_compressed(i+(j-1)*m,3) = Ap(i,j)
-        A_compressed(i+(j-1)*m,4) = Ae(i,j)
-        A_compressed(i+(j-1)*m,5) = An(i,j)
+          ! Compress stiffness matrix values
+          A_values(i+(j-1)*m+(k-1)*m*n,1) = Ab(i,j,k)
+          A_values(i+(j-1)*m+(k-1)*m*n,2) = As(i,j,k)
+          A_values(i+(j-1)*m+(k-1)*m*n,3) = Aw(i,j,k)
+          A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
+          A_values(i+(j-1)*m+(k-1)*m*n,5) = Ae(i,j,k)
+          A_values(i+(j-1)*m+(k-1)*m*n,6) = An(i,j,k)
+          A_values(i+(j-1)*m+(k-1)*m*n,7) = At(i,j,k)
 
-        ! Compress right-hand side values
-        b_compressed(i+(j-1)*m) = b(i,j)
+          ! Compress right-hand side values
+          b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)
 
-        ! Compress preconditioning values
-        x_compressed(i+(j-1)*m) = x(i,j)
-
+          ! Compress preconditioning values
+          x_compressed(i+(j-1)*m+(k-1)*m*n) = x(i,j,k)
+        end do
       end do
-	end do
-	
-	! Compute matrix-vector product of A_compressed and x_compressed
-	call mkl_ddiagemv('N', m*n, A_compressed, m*n, A_distance, 5, x_compressed, Ax)
+    end do
 
-	! Compute norm of b-Ax
-	residual = abs(dnrm2(m*n, b_compressed-Ax, 1))
-    
-	if (residual < tol) then
-      print *, 'Completed!'
+    ! Check convergence of BiCG
+    call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
+    r_norm = abs(dnrm2(m*n*l, b_values-Axx, 1))
+
+    if (r_norm < tol) then
+      print *, 'BiCGStab Algorithm successfully converged!'
       print *, 'Number of Iterations: ', itr
-      print *, 'Relative residual: ', residual
+      print *, 'Relative residual: ', r_norm
+      tol = r_norm
+	  maxit = i
       exit
-    elseif (k .eq. maxit) then
-      print *, 'TDMA did not converge!'
-      print *, 'Number of Iterations: ', itr
-      print *, 'Relative residual: ', residual
     end if
 
+    if (itr .eq. maxit) then
+      print *, 'BiCGStab Algorithm did not converge!'
+      print *, 'Number of Iterations: ', itr
+      print *, 'Relative residual: ', r_norm
+	  tol = r_norm
+    end if
+
+
+    ! ----------------------------------------------------------------------------------------- !
+    ! ------------------------------- End Check Convergence ----------------------------------- !
+    ! ----------------------------------------------------------------------------------------- !
+
   end do
 
-  ! Update phi with the solution
-  do j = 1,n
-    do i = 1,m
-      phi(i,j) = x(i,j)
-    end do
-  end do
+  ! ----------------------------------------------------------------------------------------- !
+  ! --------------------------------------- End TDMA ---------------------------------------- !
+  ! ----------------------------------------------------------------------------------------- !
 
   return
 
-end subroutine solver2d_tdma
+end subroutine solver3d_tdma
