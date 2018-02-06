@@ -1,0 +1,50 @@
+! Variable Declaration file for 2D Diffusion Problems
+!
+! Written by Matt Blomquist
+! Last Update: 2018-02-02 (YYYY-MM-DD)
+!
+! This file defines the parameter and variable names used throughout
+! the main2d function.
+!
+! Mesh parameters :: nodes in x, nodes in y, nodes in z
+  integer :: m, n, l
+  real(8) :: tol
+  parameter (m=3, n=3, l=1)
+  parameter (tol=1e-4)
+
+! Define common values
+  real(8), dimension(m,n) :: Ap, Aw, Ae, As, An
+  real(8), dimension(m,n) :: b
+  common Ap, Aw, Ae, As, An, b
+
+! Define /media/ properties
+  real(8) :: rho, k
+  common /media/ rho, k
+
+! Define /geometry/ parameters
+  real(8) :: length, width, depth
+  parameter (length=1, width=1, depth=1)
+
+! Define /geometry/ variables
+  real(8) :: dx, dy, dz, A_x, A_y, A_z
+  common /geometry/ dx, dy, dz, A_x, A_y, A_z
+
+! Define /temperature/ variables
+  real(8), dimension(m,n) :: T
+  common /temperature/ T
+
+  real(8), dimension(m,n) :: Sc_t, Sp_t
+  common /temperature/ Sc_t, Sp_t
+
+! Define /solver/ variables
+  real(8), dimension(m*n) :: x_initial, x_solution
+  common /solver/ x_initial, x_solution
+
+  integer :: itr, maxit
+  parameter (maxit=100)
+  common /solver/ itr
+
+! Define /convergence/ variables
+  real(8) :: start_time, finish_time
+  real(8), dimension(maxit,3) :: residual
+  common /convergence/ start_time, finish_time, residual
