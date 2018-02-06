@@ -1,18 +1,18 @@
-! Diffusion Solver
+! output_setup3d
 !
 ! Written by Matt Blomquist
-! Last Update: 2018-01-21 (YYYY-MM-DD)
+! Last Update: 2018-02-06 (YYYY-MM-DD)
 !
-! This program solves one-, two-, and three-dimensional diffusions problems
-! using the BiCG algorithm.
+! This program outputs the problem setup data file for a 3D diffusion
+! problem.
 
-subroutine output_setup2d
+subroutine output_setup3d
 
   ! Include standard variable header
-  include "var2d.dec"
+  include "var3d.dec"
 
   ! Define internal variables
-  integer :: i, j
+  integer :: i, j, k
 
   open(unit=2, file="output/output_setup.txt")
 
@@ -22,4 +22,4 @@ subroutine output_setup2d
 
   return
 
-end subroutine output_setup2d
+end subroutine output_setup3d
