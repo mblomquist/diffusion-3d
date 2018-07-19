@@ -14,9 +14,9 @@ subroutine source3d
   integer :: i, j, k
 
   ! Update Coefficients
-  do i = 1, m
-    do j = 1, n
-      do k = 1, l
+  do i = 2, m-1
+    do j = 2, n-1
+      do k = 2, l-1
 
         Aw(i,j,k) = dy*dz/dx
         Ae(i,j,k) = dy*dz/dx

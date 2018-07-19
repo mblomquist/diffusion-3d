@@ -371,6 +371,9 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 	r_sum = 0.
 
+  print *, "r(i,j)", r
+
+
 	do i = 1,m
 	  do j = 1,n
 	    do k = 1,l

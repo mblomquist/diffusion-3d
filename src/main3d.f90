@@ -20,36 +20,36 @@ program main3d
   call initialize3d
 
   ! Set coefficient values
-  !call boundary3d
+  call boundary3d
   call source3d
 
   ! Manually Input Source (West = 1, East = 0)
-  Aw(1,:,:) = 0.
-  Ae(1,:,:) = 0.
-  As(1,:,:) = 0.
-  An(1,:,:) = 0.
-  Ab(1,:,:) = 0.
-  At(1,:,:) = 0.
-  Ap(1,:,:) = 1.
-  b(1,:,:) = 1.
+  !Aw(1,:,:) = 0.
+  !Ae(1,:,:) = 0.
+  !As(1,:,:) = 0.
+  !An(1,:,:) = 0.
+  !Ab(1,:,:) = 0.
+  !At(1,:,:) = 0.
+  !Ap(1,:,:) = 1.
+  !b(1,:,:) = 1.
 
-  Aw(m,:,:) = 0.
-  Ae(m,:,:) = 0.
-  As(m,:,:) = 0.
-  An(m,:,:) = 0.
-  Ab(m,:,:) = 0.
-  At(m,:,:) = 0.
-  Ap(m,:,:) = 1.
-  b(m,:,:) = 0.1
+  !Aw(m,:,:) = 0.
+  !Ae(m,:,:) = 0.
+  !As(m,:,:) = 0.
+  !An(m,:,:) = 0.
+  !Ab(m,:,:) = 0.
+  !At(m,:,:) = 0.
+  !Ap(m,:,:) = 1.
+  !b(m,:,:) = 0.1
 
   ! Print coefficient
-  !do k = 1,l
-  !  do j = 1,n
-  !    do i = 1,m
-  !      print *,i,j,k, Ap(i,j,k), b(i,j,k)
-  !    end do
-  !  end do
-  !end do
+  do k = 1,l
+    do j = 1,n
+      do i = 1,m
+        print *,i,j,k, Ap(i,j,k), b(i,j,k)
+      end do
+    end do
+  end do
 
   ! Start Timer
   call cpu_time(start_time)
