@@ -9,8 +9,8 @@
 subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
 
   integer, intent(in) :: m, n, l, maxit
-  real(8), dimension(m,n), intent(in) :: Aw, Ae, As, An, At, Ab, Ap, b
-  real(8), dimension(m,n), intent(inout) :: phi
+  real(8), dimension(m,n,l), intent(in) :: Aw, Ae, As, An, At, Ab, Ap, b
+  real(8), dimension(m,n,l), intent(inout) :: phi
 
   integer :: i, j, k, itr
   real(8), dimension(m) :: awe, bwe, cwe, dwe, phiwe
@@ -25,7 +25,7 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 	do k = 1,l
 	  do j = 1,n
 	    do i = 1,m
-		  
+
 		  awe(i) = Ap(i,j,k)
 		  bwe(i) = -Ae(i,j,k)
 		  cwe(i) = -Aw(i,j,k)
@@ -62,11 +62,12 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 		  end if
 
-		  call solver1d_tdma(awe, bwe, cwe, dwe, phiwe, m)
-
-		  phi(:,j,k) = phiwe(:)
-
 		end do
+
+    call solver1d_tdma(awe, bwe, cwe, dwe, phiwe, m)
+
+    phi(:,j,k) = phiwe(:)
+
 	  end do
 	end do
 
@@ -81,7 +82,7 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 		  if (k .eq. 1) then
 
-		    if (i .eq. 1) then 
+		    if (i .eq. 1) then
 		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
 		    elseif (i .eq. m) then
 		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
@@ -91,7 +92,7 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 		  elseif (k .eq. l) then
 
-		    if (i .eq. 1) then 
+		    if (i .eq. 1) then
 		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
 		    elseif (i .eq. m) then
 		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
@@ -101,7 +102,7 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 		  else
 
-		    if (i .eq. 1) then 
+		    if (i .eq. 1) then
 		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
 		    elseif (i .eq. m) then
 		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
@@ -111,11 +112,12 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 		  end if
 
-		  call solver1d_tdma(asn, bsn, csn, dsn, phisn, n)
-
-		  phi(i,:,k) = phisn(:)
-
 		end do
+
+    call solver1d_tdma(asn, bsn, csn, dsn, phisn, n)
+
+    phi(i,:,k) = phisn(:)
+
 	  end do
 	end do
 
@@ -125,47 +127,48 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 	  do i = 1,m
 	    do k = 1,l
 
-		  atb = Ap(i,j,k)
-		  btb = -At(i,j,k)
-		  ctb = -Ab(i,j,k)
+		  abt = Ap(i,j,k)
+		  bbt = -At(i,j,k)
+		  cbt = -Ab(i,j,k)
 
 		  if (j .eq. 1) then
-		  
-			if (i .eq. 1) then 
-			  dtb(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
+
+			if (i .eq. 1) then
+			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
 			elseif (i .eq. m) then
-			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+An(i,j,k)*phi(i,j+1,k)
-			else 
-			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
+			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+An(i,j,k)*phi(i,j+1,k)
+			else
+			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
 			end if
 
 		  elseif (i .eq. n) then
 
-			if (i .eq. 1) then 
-			  dtb(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
+			if (i .eq. 1) then
+			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
 			elseif (i .eq. m) then
-			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)
-			else 
-			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
+			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)
+			else
+			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
 			end if
 
 		  else
 
-			if (i .eq. 1) then 
-			  dtb(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+			if (i .eq. 1) then
+			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
 			elseif (i .eq. m) then
-			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
-			else 
-			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+			else
+			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
 			end if
 
 		  end if
 
-		  call solver1d_tdma(atb, btb, ctb, dtb, phitb, l)
-
-		  phi(i,j,:) = phitb(:)
-
 		end do
+
+    call solver1d_tdma(abt, bbt, cbt, dbt, phibt, l)
+
+    phi(i,j,:) = phibt(:)
+
 	  end do
 	end do
 
@@ -365,7 +368,7 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
         end do
       end do
     end do
-	
+
 	r_sum = 0.
 
 	do i = 1,m
@@ -378,9 +381,12 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 	if (r_sum .le. tol) then
 	  print *, "TDMA Compelete."
-      print *, "r_sum:", r_sum
-      print *, "itrs:", itr
+    print *, "r_sum:", r_sum
+    print *, "itrs:", itr
       return
+  else
+    print *, "r_sum:", r_sum
+    print *, "itrs:", itr
 	end if
 
   end do

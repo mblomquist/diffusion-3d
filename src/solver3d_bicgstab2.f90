@@ -51,13 +51,13 @@ subroutine solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, 
       do i = 1,m
 
         ! Compress stiffness matrix values
-		A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,2) = -As(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,3) = -Aw(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,5) = -Ae(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,6) = -An(i,j,k)
-		A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
         b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)
@@ -81,7 +81,7 @@ subroutine solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, 
 
   if (r_norm < tol) then
     print *, 'Initial guess is a sufficient solution'
-	print *, 'relative residual: ', r_norm
+	  print *, 'relative residual: ', r_norm
     return
   end if
 
@@ -120,14 +120,17 @@ subroutine solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, 
 	rho_1 = rho
 	p = r - beta * (p - omega_1 * v - omega_2 * w)
 	call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, p, v)
+
 	gamma = ddot(m*n*l, v, 1, r0_hat, 1)
 	alpha = rho / gamma
 	r = r - alpha * v
 	call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, r, s)
+
 	x = x + alpha * p
 
 	! Check solution
 	call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Ax)
+
 	r_norm = abs(dnrm2(m*n*l, b_values - Ax, 1))
 
 	if (r_norm < tol) then
@@ -135,13 +138,13 @@ subroutine solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, 
       !print *, 'Number of Iterations: ', itr
       !print *, 'Relative residual: ', r_norm
 
-	  do k = 1,l
+      do k = 1,l
         do j = 1,n
           do i = 1,m
             phi(i,j,k) = x(i+(j-1)*m+(k-1)*m*n)
-		  end do
         end do
       end do
+    end do
 
       return
     end if
@@ -189,9 +192,9 @@ subroutine solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, 
 	x = x + alpha * p + omega_1 * r + omega_2 * s
 	r = r - omega_1 * s - omega_2 * t
 
-
 	! Check solution
 	call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Ax)
+
 	r_norm = abs(dnrm2(m*n*l, b_values - Ax, 1))
 
 	if (r_norm < tol) then

@@ -11,54 +11,56 @@ subroutine source3d
   include "var3d.dec"
 
   ! Define internal variables
-  integer :: i, j, k  
+  integer :: i, j, k
 
   ! Update Coefficients
-  do i = 2, m-1
-    do j = 2, n-1
-	  do k = 2, l-1
+  do i = 1, m
+    do j = 1, n
+      do k = 1, l
 
-	    if (i .eq. 1) then
-	      Aw(i,j,k) = 0.
-		else
-		  Aw(i,j,k) = dy*dz/dx
-		end if
+        Aw(i,j,k) = dy*dz/dx
+        Ae(i,j,k) = dy*dz/dx
+        As(i,j,k) = dz*dx/dy
+        An(i,j,k) = dz*dx/dy
+        Ab(i,j,k) = dx*dy/dz
+        At(i,j,k) = dx*dy/dz
 
-		if (i .eq. m) then
-		  Ae(i,j,k) = 0.
-		else
-		  Ae(i,j,k) = dy*dz/dx
-		end if 
+        if (i .eq. 1) then
 
-		if (j .eq. 1) then
-		  As(i,j,k) = 0.
-		else
-		  As(i,j,k) = dz*dx/dy
-		end if
+          Aw(i,j,k) = 0.
 
-		if (j .eq. m) then
-		  An(i,j,k) = 0.
-		else
-		  An(i,j,k) = dz*dx/dy
-		end if
+        end if
+        if (i .eq. m) then
 
-		if (k .eq. 1) then
-		  Ab(i,j,k) = 0.
-		else
-		  Ab(i,j,k) = dx*dy/dz
-		end if
+          Ae(i,j,k) = 0.
 
-		if (k .eq. l) then
-		  At(i,j,k) = 0.
-		else
-		  At(i,j,k) = dx*dy/dz
-		end if
+        end if
+        if (j .eq. 1) then
 
-	    Ap(i,j,k) = Aw(i,j,k)+Ae(i,j,k)+As(i,j,k)+An(i,j,k)+Ab(i,j,k)+At(i,j,k)+Sp(i,j,k)*dx*dy*dz
-		b(i,j,k) = Su(i,j,k)*dx*dy*dz
+          As(i,j,k) = 0.
 
-	  end do
-	end do
+        end if
+        if (j .eq. n) then
+
+          An(i,j,k) = 0.
+
+        end if
+        if (k .eq. 1) then
+
+          Ab(i,j,k) = 0.
+
+        end if
+        if (k .eq. l) then
+
+          At(i,j,k) = 0.
+
+        end if
+
+        Ap(i,j,k) = Aw(i,j,k)+Ae(i,j,k)+As(i,j,k)+An(i,j,k)+Ab(i,j,k)+At(i,j,k)+Sp(i,j,k)*dx*dy*dz
+        b(i,j,k) = Su(i,j,k)*dx*dy*dz
+
+      end do
+    end do
   end do
 
   return

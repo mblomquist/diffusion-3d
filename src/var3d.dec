@@ -1,0 +1,43 @@
+! Variable Declaration file for 3D Diffusion Problems
+!
+! Written by Matt Blomquist
+! Last Update: 2018-07-19 (YYYY-MM-DD)
+!
+! This file defines the parameter and variable names used throughout
+! the main2d function.
+!
+
+! Mesh parameters :: nodes in x, nodes in y, nodes in z
+  integer :: m, n, l
+  parameter (m=3, n=3, l=3)
+
+! Geometry variables ::
+  real(8) :: length, width, depth, dx, dy, dz
+  common length, width, depth, dx, dy, dz
+
+! Problem Variables ::
+  real(8) :: T_h, T_c
+  common T_h, T_c
+
+! Temperature :: T
+  real(8), dimension(1:m,1:n,1:l) :: T
+  common T
+
+! Temperature :: solution variables
+  real(8), dimension(1:m,1:n,1:l) :: As, Aw, Ap, Ae, An, Ab, At, b, Su, Sp
+  common As, Aw, Ap, Ae, An, Ab, At, b, Su, Sp
+
+! Temperature :: boundary conditions
+  integer :: T_bc_wc, T_bc_ec, T_bc_sc, T_bc_nc, T_bc_bc, T_bc_tc
+  common T_bc_wc, T_bc_ec, T_bc_sc, T_bc_nc, T_bc_bc, T_bc_tc
+
+! Temperature :: boundary values
+  real(8) :: T_bc_wv, T_bc_ev, T_bc_sv, T_bc_nv, T_bc_bv, T_bc_tv
+  common T_bc_wv, T_bc_ev, T_bc_sv, T_bc_nv, T_bc_bv, T_bc_tv
+
+! Solution Parameters ::
+  integer :: maxit, solver
+  common maxit, solver
+
+  real(8) :: solver_tol
+  common solver_tol

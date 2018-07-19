@@ -32,8 +32,8 @@ subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
   integer, intent(in) :: m, n, l
   integer, intent(in) :: maxit
   real(8), intent(in) :: tol
-  real(8), dimension(m,n), intent(in) :: As, Aw, Ap, Ae, An, Ab, At, b
-  real(8), dimension(m,n), intent(inout) :: phi
+  real(8), dimension(m,n,l), intent(in) :: As, Aw, Ap, Ae, An, Ab, At, b
+  real(8), dimension(m,n,l), intent(inout) :: phi
 
   ! Define internal variables
   integer :: i, j, k, itr
@@ -51,13 +51,13 @@ subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
       do i = 1,m
 
         ! Compress stiffness matrix values
-		A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,2) = -As(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,3) = -Aw(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,5) = -Ae(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,6) = -An(i,j,k)
-		A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
         b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)

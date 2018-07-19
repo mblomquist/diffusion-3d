@@ -6,6 +6,11 @@
 
 subroutine initialize3d
 
+  implicit none
+
+  ! Include standard variable header
+  include "var3d.dec"
+
   ! Read Input File ..........
   open(unit = 2, file = "input3d.txt")
   read(2,*)
@@ -22,6 +27,16 @@ subroutine initialize3d
   ! Determine T_h and T_c
   T_h = maxval((/T_bc_wv, T_bc_ev, T_bc_sv, T_bc_nv, T_bc_bv, T_bc_tv/))
   T_c = minval((/T_bc_wv, T_bc_ev, T_bc_sv, T_bc_nv, T_bc_bv, T_bc_tv/))
+
+  ! Set Initial Values to 0.
+  T = 0.
+  Su = 0.
+  Sp = 0.
+
+  ! Determine dx, dy, dz
+  dx = length/m/length
+  dy = width/n/length
+  dz = depth/l/length
 
   return
 

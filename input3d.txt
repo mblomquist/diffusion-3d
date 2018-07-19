@@ -2,8 +2,8 @@
 ! geometry :: length, width, depth
 1.0, 1.0, 1.0
 ! Temperature bc :: T_west, T_east, T_north, T_south, T_bottom, T_top
-300.0, 200.0, 0.0, 0.0, 0.0, 0.0
+300.0, 200.0, 200.0, 200.0, 200.0, 200.0
 ! u-velocity bc type :: west, east, north, south, bottom, top
-1, 0, 2, 2, 2, 2
+1, 1, 1, 1, 1, 1
 ! solution parameters :: maxit, solver_tol, solver
-1e4, 1.0e-6, 1
+1000, 1.0e-6, 5
