@@ -1,59 +1,44 @@
 ! 3D Diffusion Solver
-!
+! 
 ! Written by Matt Blomquist
-! Last Update: 2018-02-06 (YYYY-MM-DD)
+! Last Update: 2018-07-17 (YYYY-MM-DD)
 !
-! This program solves three-dimensional diffusions problems using the
-! BiCG algorithm and Line-by-Line TDMA.
+! This program solves three-dimensional diffusions problems.
 
 program main3d
+
+  implicit none
 
   ! Include standard variable header
   include "var3d.dec"
 
-  ! Initialize boundary conditions
-  print *, "Initialize 3D Diffusion Problem"
+  ! Initialize Problem
   call initialize3d
 
-  ! Output problem setup datafile
-  print *, "Output Setup Datafile"
-  call output_setup3d
+  ! Set coefficient values
+  call boundary3d
+  call source3d
 
-  ! Update source terms
-  print *, "Update source terms"
-  call diffusion_source3d
-
-  ! Set residual vector
-  residual = 0
-
-  ! Presolver Notice
-  print *, "Problem size (i,j): ", m, n
-  print *, "....................."
-
-  T = 0
-
-  ! Run BiCG solver
-  print *, "Run BiCGStab Solver"
+  ! Start Timer
   call cpu_time(start_time)
-  call solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, tol, maxit)
-  call cpu_time(finish_time)
 
-  print *, "Total runtime:", finish_time-start_time, "seconds."
-  print *, "....................."
+  ! Solve Diffusion Problem
+  if (solver .eq. 0) then
+    call solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, u_star, m, n, l, solver_tol, maxit)
+  elseif (solver .eq. 1) then
+    call solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, u_star, m, n, l, solver_tol, maxit)
+  elseif (solver .eq. 2) then
+    call solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, u_star, m, n, l, solver_tol, maxit)
+  elseif (solver .eq. 3) then
+    call solver3d_paradiso(Ab, As, Aw, Ap, Ae, An, At, b, u_star, m, n, l, solver_tol, maxit)
+  else
+    call solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, u_star, m, n, l, solver_tol, maxit)
+  end if
 
-  T = 0
+  ! Stop Timer
+  call cpu_time(end_time)
 
-  ! Run BiCG solver
-  print *, "Run Line by Line TDMA Solver"
-  call cpu_time(start_time)
-  call solver23_tdma(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, tol, maxit)
-  call cpu_time(finish_time)
-
-  print *, "Total runtime:", finish_time-start_time, "seconds."
-  print *, "....................."
-
-  ! Output results datafile
-  print *, "Output Results datafile"
-  call output_results3d
+  ! Output Results
+  call output3d
 
 end program main3d

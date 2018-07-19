@@ -1,312 +1,389 @@
 ! solver3d_tdma
 !
 ! Written by Matt Blomquist
-! Last Update: 2018-02-06 (YYYY-MM-DD)
+! Last Update: 2018-07-18 (YYYY-MM-DD)
 !
-! This program solves a three-dimensional finite volume discretization problem
-! using the line-by-line tri-diagonal matrix algorithm.
+! This program solves a three-dimensional discretization problem utilizing a line-by-line
+! TDMA (tri-diagonal matrix algorithm).
 !
-! Definition of input arguments
-! Inputs:
-!   Ab, As, Aw, Ap, Ae, An, At :: These arrays represent the coefficients for adjacent nodes
-!   b :: This array represents the right-hand side of the equation Ax=b
-!   phi :: This value represents the appropriate solution array (pressure, velocity, temperature)
-!   m, n, l :: These values represent the number of nodes for i, j, and k for the phi value
-!   tol :: represents the solution tolerance
-!   maxit :: represents the maximum number of iterations of the BiCGStab Algorithm
-!
-! Outputs:
-!   phi :: on exit, this value contains the updated solution
-!   maxit :: on exit, this value contains the number of iterations of the BiCGStab algorithm
-!   tol :: on exit, this value represents the normalized residual
+subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
 
-subroutine solver3d_tdma
+  integer, intent(in) :: m, n, l, maxit
+  real(8), dimension(m,n), intent(in) :: Aw, Ae, As, An, At, Ab, Ap, b
+  real(8), dimension(m,n), intent(inout) :: phi
 
-  ! Define implicit
-  implicit none
+  integer :: i, j, k, itr
+  real(8), dimension(m) :: awe, bwe, cwe, dwe, phiwe
+  real(8), dimension(n) :: asn, bsn, csn, dsn, phisn
+  real(8), dimension(l) :: abt, bbt, cbt, dbt, phibt
+  real(8), dimension(m,n,l) :: r
+  real(8) :: r_sum, tol
 
-  ! Include mkl functions
-  include "mkl.fi"
+  do itr = 1,maxit
 
-  ! Define input variables
-  integer, intent(in) :: m, n, l
-  integer, intent(inout) :: maxit
-  real(8), intent(inout) :: tol
-  real(8), dimension(m,n,l), intent(in) :: Ab, As, Aw, Ap, Ae, An, At, b
-  real(8), dimension(m,n,l), intent(inout) :: phi
-
-  ! Define internal variables
-  integer :: i, j, k, itr_main, itr_inner
-  integer, dimension(7) :: A_distance
-
-  real(8) :: r_norm
-  real(8), dimension(m) :: bx_line
-  real(8), dimension(n) :: by_line
-  real(8), dimension(l) :: bz_line
-  real(8), dimension(m*n*l,7) :: A_values
-  real(8), dimension(m*n*l) :: x_compressed, b_values
-
-  ! ----------------------------------------------------------------------------------------- !
-  ! -------------------------------------- Start TDMA --------------------------------------- !
-  ! ----------------------------------------------------------------------------------------- !
-  do itr_main = 1,maxit
-
-    ! Start west to east loop
-    do itr_inner = 1,itr_main
-	  
-	  k = 1
-
+    ! ==================== West - East ==================== !
+	do k = 1,l
 	  do j = 1,n
-	    
-		do i = 1,m
-		
+	    do i = 1,m
+		  
+		  awe(i) = Ap(i,j,k)
+		  bwe(i) = -Ae(i,j,k)
+		  cwe(i) = -Aw(i,j,k)
+
 		  if (j .eq. 1) then
-		    bx_line(i) =
-		  elseif (j .eq. n) then
-		    bx_line(i) =
-		  else
-		    bx_line(i) =
-		  end if
-		
-		end do
-
-	    call solver1d_tdma()
-
-	  end do
-
-	  do k = 2:l-1
-	    do j = 1,n
-	    
-		  do i = 1,m
-		
-		    if (j .eq. 1) then
-			  bx_line(i) =
-		    elseif (j .eq. n) then
-			  bx_line(i) =
-		    else
-			  bx_line(i) =
-		    end if
-		
-		  end do
-
-	      call solver1d_tdma()
-
-	    end do
-	  end do
-	  
-	  k = l
-
-	  do j = 1,n
-	    
-		do i = 1,m
-		
-		  if (j .eq. 1) then
-		    bx_line(i) =
-		  elseif (j .eq. n) then
-		    bx_line(i) =
-		  else
-		    bx_line(i) =
-		  end if
-		
-		end do
-
-	    call solver1d_tdma()
-
-	  end do
-
-	end do
-
-    ! Start south to north loop
-    do itr_inner = 1,itr_main
-
-	  i = 1
-
-	  do k = 1:l
-
-	    do j = 1:n
-
-		  if (k .eq. 1) then
-		    by_line(j) = 
-		  elseif (k .eq. l) then
-		    by_line(j) = 
-		  else
-		    by_line(j) = 
-		  end if
-
-		end do
-
-		call solver1d_tdma()
-
-	  end do
-
-	  do i = 2:m-1
-
-	  	do k = 1:l
-
-	      do j = 1:n
 
 		    if (k .eq. 1) then
-		      by_line(j) = 
-		    elseif (k .eq. l) then
-		      by_line(j) = 
-		    else
-		      by_line(j) = 
-		    end if
+			  dwe(i) = b(i,j,k)+An(i,j,k)*phi(i,j+1,k)+At(i,j,k)*phi(i,j,k+1)
+			elseif (k .eq. l) then
+			  dwe(i) = b(i,j,k)+An(i,j,k)*phi(i,j+1,k)+Ab(i,j,k)*phi(i,j,k-1)
+			else
+			  dwe(i) = b(i,j,k)+An(i,j,k)*phi(i,j+1,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+			end if
 
-  		  end do
+		  elseif (j .eq. n) then
 
-		  call solver1d_tdma()
+		    if (k .eq. 1) then
+			  dwe(i) = b(i,j,k)+As(i,j,k)*phi(i,j-1,k)+At(i,j,k)*phi(i,j,k+1)
+			elseif (k .eq. l) then
+			  dwe(i) = b(i,j,k)+As(i,j,k)*phi(i,j-1,k)+Ab(i,j,k)*phi(i,j,k-1)
+			else
+			  dwe(i) = b(i,j,k)+As(i,j,k)*phi(i,j-1,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+			end if
 
-	    end do
+		  else
 
+		    if (k .eq. 1) then
+			  dwe(i) = b(i,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)+At(i,j,k)*phi(i,j,k+1)
+			elseif (k .eq. l) then
+			  dwe(i) = b(i,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)+Ab(i,j,k)*phi(i,j,k-1)
+			else
+			  dwe(i) = b(i,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+			end if
+
+		  end if
+
+		  call solver1d_tdma(awe, bwe, cwe, dwe, phiwe, m)
+
+		  phi(:,j,k) = phiwe(:)
+
+		end do
 	  end do
+	end do
 
-	  i = m
+	! =================== South - North =================== !
+	do i = 1,m
+	  do k = 1,l
+	    do j = 1,n
 
-	  do k = 1:l
-
-	    do j = 1:n
+		  asn(j) = Ap(i,j,k)
+		  bsn(j) = -An(i,j,k)
+		  csn(j) = -As(i,j,k)
 
 		  if (k .eq. 1) then
-		    by_line(j) = 
-		  elseif (k .eq. l) then
-		    by_line(j) = 
-		  else
-		    by_line(j) = 
-		  end if
 
-		end do
-
-		call solver1d_tdma()
-
-	  end do
-
-	end do
-
-    ! Start bottom to top loop
-    do itr_inner = 1,itr_main
-
-	  j = 1
-
-	  do i = 1,m
-
-	    do k = 1,l
-
-		  if (i .eq. 1) then
-		    bz_line(k) = 
-		  elseif (i .eq. m) then
-		    bz_line(k) = 
-		  else
-		    bz_line(k) = 
-		  end if
-
-		end do
-
-		call solver1d_tdma()
-
-	  end do
-
-	  do j = 2:n-1
-
-	    do i = 1,m
-
-	      do k = 1,l
-
-		    if (i .eq. 1) then
-		      bz_line(k) = 
+		    if (i .eq. 1) then 
+		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
 		    elseif (i .eq. m) then
-		      bz_line(k) = 
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
 		    else
-		      bz_line(k) = 
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
 		    end if
 
-		  end do
+		  elseif (k .eq. l) then
 
-		  call solver1d_tdma()
+		    if (i .eq. 1) then 
+		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
+		    elseif (i .eq. m) then
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
+		    else
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
+		    end if
 
-	    end do
+		  else
 
+		    if (i .eq. 1) then 
+		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+		    elseif (i .eq. m) then
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+		    else
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+		    end if
+
+		  end if
+
+		  call solver1d_tdma(asn, bsn, csn, dsn, phisn, n)
+
+		  phi(i,:,k) = phisn(:)
+
+		end do
 	  end do
+	end do
 
-	  j = n
 
+	! ===================== Bottom - Top ================== !
+	do j = 1,n
 	  do i = 1,m
+	    do k = 1,l
 
+		  atb = Ap(i,j,k)
+		  btb = -At(i,j,k)
+		  ctb = -Ab(i,j,k)
+
+		  if (j .eq. 1) then
+		  
+			if (i .eq. 1) then 
+			  dtb(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
+			elseif (i .eq. m) then
+			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+An(i,j,k)*phi(i,j+1,k)
+			else 
+			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
+			end if
+
+		  elseif (i .eq. n) then
+
+			if (i .eq. 1) then 
+			  dtb(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
+			elseif (i .eq. m) then
+			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)
+			else 
+			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
+			end if
+
+		  else
+
+			if (i .eq. 1) then 
+			  dtb(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+			elseif (i .eq. m) then
+			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+			else 
+			  dtb(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+			end if
+
+		  end if
+
+		  call solver1d_tdma(atb, btb, ctb, dtb, phitb, l)
+
+		  phi(i,j,:) = phitb(:)
+
+		end do
+	  end do
+	end do
+
+	! =================== Check Solution ================== !
+	do i = 1,m
+	  do j = 1,n
 	    do k = 1,l
 
 		  if (i .eq. 1) then
-		    bz_line(k) = 
+			if (j .eq. 1) then
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			elseif (j .eq. n) then
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			else
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			end if
 		  elseif (i .eq. m) then
-		    bz_line(k) = 
+			if (j .eq. 1) then
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			elseif (j .eq. n) then
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			else
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			end if
 		  else
-		    bz_line(k) = 
+			if (j .eq. 1) then
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			elseif (j .eq. n) then
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			else
+			  if (k .eq. 1) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  elseif (k .eq. l) then
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 b(i,j,k))
+			  else
+			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
+				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
+				                                 As(i,j,k)*phi(i,j-1,k)+ &
+				                                 An(i,j,k)*phi(i,j+1,k)+ &
+				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
+				                                 At(i,j,k)*phi(i,j,k+1)+ &
+				                                 b(i,j,k))
+			  end if
+			end if
 		  end if
 
-		end do
-
-		call solver1d_tdma()
-
-	  end do
-
-	end do
-
-    ! ----------------------------------------------------------------------------------------- !
-    ! ----------------------------------- Check Convergence ----------------------------------- !
-    ! ----------------------------------------------------------------------------------------- !
-
-    ! Convert values into CDS Format
-    do k = 1,l
-      do j = 1,n
-        do i = 1,m
-
-          ! Compress stiffness matrix values
-          A_values(i+(j-1)*m+(k-1)*m*n,1) = Ab(i,j,k)
-          A_values(i+(j-1)*m+(k-1)*m*n,2) = As(i,j,k)
-          A_values(i+(j-1)*m+(k-1)*m*n,3) = Aw(i,j,k)
-          A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
-          A_values(i+(j-1)*m+(k-1)*m*n,5) = Ae(i,j,k)
-          A_values(i+(j-1)*m+(k-1)*m*n,6) = An(i,j,k)
-          A_values(i+(j-1)*m+(k-1)*m*n,7) = At(i,j,k)
-
-          ! Compress right-hand side values
-          b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)
-
-          ! Compress preconditioning values
-          x_compressed(i+(j-1)*m+(k-1)*m*n) = x(i,j,k)
         end do
       end do
     end do
+	
+	r_sum = 0.
 
-    ! Check convergence of BiCG
-    call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
-    r_norm = abs(dnrm2(m*n*l, b_values-Axx, 1))
+	do i = 1,m
+	  do j = 1,n
+	    do k = 1,l
+		  r_sum = r_sum + abs(r(i,j,k))
+		end do
+	  end do
+	end do
 
-    if (r_norm < tol) then
-      print *, 'BiCGStab Algorithm successfully converged!'
-      print *, 'Number of Iterations: ', itr
-      print *, 'Relative residual: ', r_norm
-      tol = r_norm
-	  maxit = i
-      exit
-    end if
-
-    if (itr .eq. maxit) then
-      print *, 'BiCGStab Algorithm did not converge!'
-      print *, 'Number of Iterations: ', itr
-      print *, 'Relative residual: ', r_norm
-	  tol = r_norm
-    end if
-
-
-    ! ----------------------------------------------------------------------------------------- !
-    ! ------------------------------- End Check Convergence ----------------------------------- !
-    ! ----------------------------------------------------------------------------------------- !
+	if (r_sum .le. tol) then
+	  print *, "TDMA Compelete."
+      print *, "r_sum:", r_sum
+      print *, "itrs:", itr
+      return
+	end if
 
   end do
-
-  ! ----------------------------------------------------------------------------------------- !
-  ! --------------------------------------- End TDMA ---------------------------------------- !
-  ! ----------------------------------------------------------------------------------------- !
 
   return
 

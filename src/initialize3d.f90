@@ -1,67 +1,27 @@
-! initialize3d Subroutine for Diffusion Problems
+! initialize3d Subroutine for 3D Diffusion Problems
 !
 ! Written by Matt Blomquist
-! Last Update: 2018-02-06 (YYYY-MM-DD)
+! Last Update: 2018-07-18 (YYYY-MM-DD)
 !
-! This subroutine runs the static calculations for geometry properties,
-! pressure properties, velocity, properties, temperature properties, and
-! sets the boundary conditions for pressure, velocity, and temperature.
 
 subroutine initialize3d
 
-  ! Pull in standard variable header
-  include "var3d.dec"
+  ! Read Input File ..........
+  open(unit = 2, file = "input3d.txt")
+  read(2,*)
+  read(2,*)
+  read(2,*) length, width, depth
+  read(2,*)
+  read(2,*) T_bc_wv, T_bc_ev, T_bc_nv, T_bc_sv, T_bc_bv, T_bc_tv
+  read(2,*)
+  read(2,*) T_bc_wc, T_bc_ec, T_bc_nc, T_bc_sc, T_bc_bc, T_bc_tc
+  read(2,*)
+  read(2,*) maxit, solver_tol, solver
+  close(2)
 
-  real(8) :: T_west, T_east
-
-  ! Calculate geometry properties
-  dx = length/m
-  dy = width/n
-  dz = depth/l
-
-  A_x = dy*dz
-  A_y = dx*dz
-  A_z = dx*dy
-
-  ! Assign temperature properties
-  k = 1000.0
-  T_west = 250.0
-  T_east = 100.0
-
-  ! Set initial values to 0
-  T = 0
-  Sc_t = 0
-  Sp_t = 0
-
-  ! Boundary Conditions
-  ! West - constant temperature - 250 °C
-  ! East - constant temperature - 100 °C
-  ! North, East - Adiabatic
-
-  ! Assign boundary conditions
-  ! West Nodes
-  Sc_t(1,:,:) = Sc_t(1,:,:) + 2*k*A_x/dx*T_west
-  Sp_t(1,:,:) = Sp_t(1,:,:) - 2*k*A_x/dx
-
-  ! East Nodes
-  Sc_t(m,:,:) = Sc_t(m,:,:) + 2*k*A_x/dx*T_east
-  Sp_t(m,:,:) = Sp_t(m,:,:) - 2*k*A_x/dx
-
-  ! South Nodes
-  Sc_t(:,1,:) = Sc_t(:,1,:) + 0
-  Sp_t(:,1,:) = Sp_t(:,1,:) + 0
-
-  ! North Nodes
-  Sc_t(:,n,:) = Sc_t(:,n,:) + 0
-  Sp_t(:,n,:) = Sp_t(:,n,:) + 0
-
-  ! Inerior Nodes
-  Sc_t(2:m-1,2:n-1,2:l-1) = 0
-  Sp_t(2:m-1,2:n-1,2:l-1) = 0
-
-  ! Set T values
-  T(1,:,:) = T_west
-  T(m,:,:) = T_east
+  ! Determine T_h and T_c
+  T_h = maxval((/T_bc_wv, T_bc_ev, T_bc_sv, T_bc_nv, T_bc_bv, T_bc_tv/))
+  T_c = minval((/T_bc_wv, T_bc_ev, T_bc_sv, T_bc_nv, T_bc_bv, T_bc_tv/))
 
   return
 
