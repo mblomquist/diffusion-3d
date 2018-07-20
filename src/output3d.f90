@@ -15,13 +15,15 @@ subroutine output3d
   ! Write field data to file
   open(unit=2, file="output/output3d_results.dat")
 
-  write(2, *), "T:"
+  write(2, *), 'TITLE = "Example: Simple 3D Volume Data"'
+  write(2, *), 'VARIABLES = "X", "Y", "Z", "Temperature"'
+  write(2, *), 'ZONE I=10, J=10, K=10, DATAPACKING=POINT'
 
   do k = 1,l
     do j = 1,n
       do i = 1,m
 
-        write(2, *), T(i,j,k)
+        write(2, *), i*dx, j*dy, k*dz, T(i,j,k)
 
       end do
     end do
