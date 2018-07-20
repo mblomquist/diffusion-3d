@@ -23,7 +23,7 @@ subroutine output3d
     do j = 1,n
       do i = 1,m
 
-        write(2, *), i*dx, j*dy, k*dz, T(i,j,k)
+        write(2, *), length*i*dx, length*j*dy, length*k*dz, T(i,j,k)
 
       end do
     end do

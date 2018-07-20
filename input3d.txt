@@ -4,6 +4,6 @@
 ! Temperature bc :: T_west, T_east, T_north, T_south, T_bottom, T_top
 300.0, 200.0, 200.0, 200.0, 200.0, 200.0
 ! u-velocity bc type :: west, east, north, south, bottom, top
-1, 2, 1, 2, 2, 2
+1, 1, 2, 2, 2, 2
 ! solution parameters :: maxit, solver_tol, solver
-100, 1.0e-5, 0
+1000, 1.0e-4, 0

@@ -141,6 +141,13 @@ subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
       print *, 'Relative residual: ', r_norm
       print *, '************************************'
       print *, '************************************'
+    else
+      print *, '************************************'
+      print *, '************************************'
+      print *, 'Number of Iterations: ', itr
+      print *, 'Relative residual: ', r_norm
+      print *, '************************************'
+      print *, '************************************'
     end if
 
   end do

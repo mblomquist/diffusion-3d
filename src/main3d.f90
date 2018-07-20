@@ -43,13 +43,13 @@ program main3d
   !b(m,:,:) = 0.1
 
   ! Print coefficient
-  do k = 1,l
-    do j = 1,n
-      do i = 1,m
-        print *,i,j,k, Ap(i,j,k), b(i,j,k)
-      end do
-    end do
-  end do
+  !do k = 1,l
+  !  do j = 1,n
+  !    do i = 1,m
+  !      print *,i,j,k, Ap(i,j,k), b(i,j,k)
+  !    end do
+  !  end do
+  !end do
 
   ! Start Timer
   call cpu_time(start_time)

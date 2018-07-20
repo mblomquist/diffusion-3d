@@ -83,31 +83,31 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 		  if (k .eq. 1) then
 
 		    if (i .eq. 1) then
-		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
+		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+At(i,j,k)*phi(i,j,k+1)
 		    elseif (i .eq. m) then
 		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
 		    else
-		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i-1,j,k)+At(i,j,k)*phi(i,j,k+1)
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+At(i,j,k)*phi(i,j,k+1)
 		    end if
 
 		  elseif (k .eq. l) then
 
 		    if (i .eq. 1) then
-		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
+		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
 		    elseif (i .eq. m) then
 		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
 		    else
-		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+Ab(i,j,k)*phi(i,j,k-1)
 		    end if
 
 		  else
 
 		    if (i .eq. 1) then
-		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+		      dsn(j) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
 		    elseif (i .eq. m) then
 		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
 		    else
-		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i-1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
+		      dsn(j) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+Ab(i,j,k)*phi(i,j,k-1)+At(i,j,k)*phi(i,j,k+1)
 		    end if
 
 		  end if
@@ -127,40 +127,34 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 	  do i = 1,m
 	    do k = 1,l
 
-		  abt = Ap(i,j,k)
-		  bbt = -At(i,j,k)
-		  cbt = -Ab(i,j,k)
+		  abt(k) = Ap(i,j,k)
+		  bbt(k) = -At(i,j,k)
+		  cbt(k) = -Ab(i,j,k)
 
 		  if (j .eq. 1) then
-
-			if (i .eq. 1) then
-			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
-			elseif (i .eq. m) then
-			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+An(i,j,k)*phi(i,j+1,k)
-			else
-			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
-			end if
-
-		  elseif (i .eq. n) then
-
-			if (i .eq. 1) then
-			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
-			elseif (i .eq. m) then
-			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)
-			else
-			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
-			end if
-
+  			if (i .eq. 1) then
+  			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
+  			elseif (i .eq. m) then
+  			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+An(i,j,k)*phi(i,j+1,k)
+  			else
+  			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+An(i,j,k)*phi(i,j+1,k)
+  			end if
+		  elseif (j .eq. n) then
+  			if (i .eq. 1) then
+  			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
+  			elseif (i .eq. m) then
+  			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)
+  			else
+  			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)
+  			end if
 		  else
-
-			if (i .eq. 1) then
-			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
-			elseif (i .eq. m) then
-			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
-			else
-			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
-			end if
-
+  			if (i .eq. 1) then
+  			  dbt(k) = b(i,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+  			elseif (i .eq. m) then
+  			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+  			else
+  			  dbt(k) = b(i,j,k)+Aw(i,j,k)*phi(i-1,j,k)+Ae(i,j,k)*phi(i+1,j,k)+As(i,j,k)*phi(i,j-1,k)+An(i,j,k)*phi(i,j+1,k)
+  			end if
 		  end if
 
 		end do
@@ -370,9 +364,6 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
     end do
 
 	r_sum = 0.
-
-  print *, "r(i,j)", r
-
 
 	do i = 1,m
 	  do j = 1,n
