@@ -69,6 +69,54 @@ subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
     end do
   end do
 
+  print *, 'Ab = ['
+  do i = 1,m*n*l
+    print *, A_values(i,1)
+  end do
+  print *, '];'
+
+  print *, 'As = ['
+  do i = 1,m*n*l
+    print *, A_values(i,2)
+  end do
+  print *, '];'
+
+  print *, 'Aw = ['
+  do i = 1,m*n*l
+    print *, A_values(i,3)
+  end do
+  print *, '];'
+
+  print *, 'Ap = ['
+  do i = 1,m*n*l
+    print *, A_values(i,4)
+  end do
+  print *, '];'
+
+  print *, 'Ae = ['
+  do i = 1,m*n*l
+    print *, A_values(i,5)
+  end do
+  print *, '];'
+
+  print *, 'An = ['
+  do i = 1,m*n*l
+    print *, A_values(i,6)
+  end do
+  print *, '];'
+
+  print *, 'At = ['
+  do i = 1,m*n*l
+    print *, A_values(i,7)
+  end do
+  print *, '];'
+
+  print *, 'b = ['
+  do i = 1,m*n*l
+    print *, b_values(i)
+  end do
+  print *, '];'
+
   ! ================================================================= !
   ! ==================== Start BiCGStab Algoritm ==================== !
   ! ================================================================= !
@@ -161,7 +209,7 @@ subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
     do j = 1,n
       do i = 1,m
         phi(i,j,k) = x(i+(j-1)*m+(k-1)*m*n)
-	  end do
+	    end do
     end do
   end do
 
