@@ -6,4 +6,4 @@
 ! u-velocity bc type :: west, east, north, south, bottom, top
 1, 1, 2, 2, 2, 2
 ! solution parameters :: maxit, solver_tol, solver
-100, 1.0e-4, 3
+100, 1.0e-4, 5

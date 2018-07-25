@@ -60,7 +60,7 @@ subroutine solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, 
 		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
-        b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)+.00001
+        b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)+1.0e-8
 
         ! Compress preconditioning values
         x0(i+(j-1)*m+(k-1)*m*n) = phi(i,j,k)
@@ -68,54 +68,6 @@ subroutine solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, 
 	    end do
     end do
   end do
-
-  print *, 'Ab = ['
-  do i = 1,m*n*l
-    print *, A_values(i,1)
-  end do
-  print *, '];'
-
-  print *, 'As = ['
-  do i = 1,m*n*l
-    print *, A_values(i,2)
-  end do
-  print *, '];'
-
-  print *, 'Aw = ['
-  do i = 1,m*n*l
-    print *, A_values(i,3)
-  end do
-  print *, '];'
-
-  print *, 'Ap = ['
-  do i = 1,m*n*l
-    print *, A_values(i,4)
-  end do
-  print *, '];'
-
-  print *, 'Ae = ['
-  do i = 1,m*n*l
-    print *, A_values(i,5)
-  end do
-  print *, '];'
-
-  print *, 'An = ['
-  do i = 1,m*n*l
-    print *, A_values(i,6)
-  end do
-  print *, '];'
-
-  print *, 'At = ['
-  do i = 1,m*n*l
-    print *, A_values(i,7)
-  end do
-  print *, '];'
-
-  print *, 'b = ['
-  do i = 1,m*n*l
-    print *, b_values(i)
-  end do
-  print *, '];'
 
   ! ======================================================================== !
   ! ========== Start Bi-conjugate Gradients Stabilized (2) Method ========== !
