@@ -23,11 +23,10 @@
 subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
 
   ! Define implicit
-  !implicit none
+  implicit none
 
   ! Include mkl functions
-  !include "mkl.fi"
-  !include "blas.f90"
+  include "mkl.fi"
 
   ! Define input variables
   integer, intent(in) :: m, n, l
@@ -43,10 +42,13 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   real(8), dimension(m*n*l) :: b_values
 
   ! Define internal variables :: GMRES
-  real(8), dimension(m*n*l) :: x, Axx, r
-  real(8) :: b_norm, r_norm
-  real(8), dimension(maxit) :: e1, error
-  real(8), dimension(m*n*l,maxit) :: Q
+
+  real(8) :: b_norm, err, r_norm, mult1
+  real(8), dimension(m*n*l) :: r, Axx, x, y, e1
+  real(8), dimension(maxit+1) :: beta, diag, sn, cs
+  real(8), dimension(m*n*l, maxit) :: Q
+  real(8), dimension(maxit+1, maxit+1) :: H
+
 
 
   ! ================================================================= !
@@ -54,31 +56,33 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! ================================================================= !
 
   ! Define distance between diagonals
-  !A_distance = (/-m*n, -m, -1, 0, 1, m, m*n/)
+  A_distance = (/-m*n, -m, -1, 0, 1, m, m*n/)
+
+  mult1 = 1.0
 
   ! Convert values into CDS Format
-  !do k = 1,l
-  !  do j = 1,n
-  !    do i = 1,m
+  do k = 1,l
+    do j = 1,n
+      do i = 1,m
 
         ! Compress stiffness matrix values
-	!	    A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
-  !      A_values(i+(j-1)*m+(k-1)*m*n,2) = -As(i,j,k)
-  !      A_values(i+(j-1)*m+(k-1)*m*n,3) = -Aw(i,j,k)
-  !      A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
-  !      A_values(i+(j-1)*m+(k-1)*m*n,5) = -Ae(i,j,k)
-  !      A_values(i+(j-1)*m+(k-1)*m*n,6) = -An(i,j,k)
-	!	    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
+        A_values(i+(j-1)*m+(k-1)*m*n,2) = -As(i,j,k)
+        A_values(i+(j-1)*m+(k-1)*m*n,3) = -Aw(i,j,k)
+        A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
+        A_values(i+(j-1)*m+(k-1)*m*n,5) = -Ae(i,j,k)
+        A_values(i+(j-1)*m+(k-1)*m*n,6) = -An(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
-  !      b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)
+        b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)+1.0e-8
 
         ! Compress preconditioning values
-  !      x(i+(j-1)*m+(k-1)*m*n) = phi(i,j,k)
+        x(i+(j-1)*m+(k-1)*m*n) = phi(i,j,k)
 
-	!  end do
-  !  end do
-  !end do
+	  end do
+    end do
+  end do
 
   ! ================================================================= !
   ! ==================== End Matrix Conversion ====================== !
@@ -89,170 +93,185 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! ================================================================= !
 
   ! Compute residual vector
-  !call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
-  !r = b_values - Axx
+  call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
+  r = b_values - Axx
+
+  ! Compute residual norm
+  r_norm = dnrm2(m*n*l, r, 1)
 
   ! Compute norm of values vector
-  !b_norm = dnrm2(m*n*l, b_values, 1)
-
-  ! Compute norm of r vector
-  !r_norm = dnrm2(m*n*l, r, 1)
+  b_norm = dnrm2(m*n*l, b_values, 1)
 
   ! Compute inital error
-  !error(1) = r_norm/b_norm
+  err = r_norm / b_norm
 
-  ! Set standard basis
-  !e1(1) = 1
+  ! Initialize vectors
+  sn = 0.
+  cs = 0.
+  e1 = 0.
+  e1(1) = 1.
 
-  ! Initialize Q matrix
-  !Q(:,1) = r/r_norm
+  ! Set Q to inital residual
+  Q(:,1) = r / r_norm
 
-  ! Initalize beta
-  !beta = r_norm*e1
+  ! Set inital beta
+  beta = r_norm * e1
 
   ! Start GMRES Loop
-  !do k = 1,maxit
+  do k = 1,maxit
 
     ! Run Arnoldi Loop
-	!q =  A*Q(:,k)
+	  call arnoldi(A_values, A_distance, Q, H, m*n*l, k, maxit)
 
-	!do i = 1,k
+	  ! Eliminate the last element in H ith row and update rotation matrix
+	  call givens_rotation(H, cs, sn, m*n*l, k, maxit)
 
-	!  h(i) = q*Q(:,i)
-	!  q = q - h(i)*Q(:,i)
+	  ! Update the residual vector
+	  beta(k+1) = -sn(k) * beta(k)
+	  beta(k) = cs(k) * beta(k)
+	  err = abs(beta(k+1)) / b_norm
 
-	!end do
+    print *, "err:", err
 
-	!h(k+1) = drnm2(m*n*l, q, 1)
-	!q = q / h(k+1)
+	  if (err .le. tol) then
 
-	! Apply Given's Rotation
-	!call arnoldi(A, Q, k, H, m)
+      y(1:k) = beta(1:k)
 
-	! Calculate Rotation
-	!call given_rotation(H, cs, sn, k)
+      print *, "beta:", beta
 
-	!beta(k+1) = -sn(k) * beta(k)
-	!beta(k) = cs(k)*beta(k)
-	!error(k) = abs(beta(k+1)) / b_norm
+	    call dtrsv('U', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
 
-	! Check solution
-	!if (error(k) .le. tol) then
+      print *, "y:", y
 
-	!  do ii = 1,k
-	!    diag(ii) = H(ii,ii)
-	!  end do
+	    call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, x, 1)
 
-	!  y(1:k) = beta(1:k)
+      print *, "x:", x
 
-	!  do ii = 1,k
-	!    do jj = ii,k
-	!      H(ii,jj) = H(ii,jj)/diag(ii)
-	!	  y(ii) = y(ii)/diag(ii)
-	!    end do
-  !    end do
+      return
 
-	!  call dtrsv('U', 'N', diag, k, H(1:k,1:k), k, y, 1)
-	!  call dgemv('N', m*n*l, k, 1, Q(:,1:k), m*n*l, y, 1, 1, x, 1)
+	  elseif (k .eq. maxit) then
 
-	!end if
+      y(1:k) = beta(1:k)
+
+	    call dtrsv('U', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
+	    call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, x, 1)
+
+      return
+
+	  end if
+
+  end do
 
   ! ================================================================= !
   ! ======================== End GMRES Algoritm ===================== !
   ! ================================================================= !
+
+  do k = 1,l
+    do j = 1,n
+      do i = 1,m
+        phi(i,j,k) = x(i+(j-1)*m+(k-1)*m*n)
+      end do
+    end do
+  end do
 
   return
 
 end subroutine solver3d_gmres
 
 
-subroutine arnoldi(A_values, A_distance, Qmat, k, H, m, n, l)
+subroutine arnoldi(A_values, A_distance, Q, H, m, k, maxit)
 
   ! Define implicit
   implicit none
 
   ! Include mkl functions
   include "mkl.fi"
-  !include "blas.f90"
 
   ! Define input variables
-  integer, intent(in) :: k, m, n, l
-  real(8), dimension(m*n*l,7) :: A_values
+  integer, intent(in) :: m, k, maxit
   integer, dimension(7) :: A_distance
-  real(8), dimension(m,k) :: Qmat
-  real(8), dimension(k,k) :: H
+  real(8), dimension(m,7) :: A_values
+  real(8), dimension(m,maxit) :: Q
+  real(8), dimension(maxit,maxit) :: H
 
+  ! Define internal variables
+  integer :: i
+  real(8), dimension(m) :: q_vec
 
-  !call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, Qmat(:,k), AxQ)
+  call mkl_ddiagemv('N', m, A_values, m, A_distance, 7, Q(:,k), q_vec)
 
-  !do i = 1,k
+  do i = 1,k
 
-	!call dgemv('N', m*n*l, k, 1, Qmat(:,1:k), m*n*l, q, 1, 1, h(i), 1)
+    H(i,k) =  ddot(m, q_vec, 1, Q(:,i), 1)
+	  q_vec = q_vec - H(i,k) * Q(:,i)
 
-	!q = q - h(i)*Qmat(:,i)
+  end do
 
-  !end do
-
-  !h(k+1) = dnrm2(m,q,1)
-  !q = q / h(k+1)
+  H(k+1,k) = dnrm2(m, q_vec, 1)
+  q_vec = q_vec / H(k+1,k)
+  Q(:,k+1) = q_vec
 
   return
+
 end subroutine arnoldi
 
-subroutine given_rotation(h, cs, sn, k)
+subroutine givens_rotation(H, cs, sn, m, k, maxit)
 
   ! Define implicit
   implicit none
 
   ! Define input variables
-  integer, intent(in) :: k
-  real(8), dimension(k+1) :: h, cs, sn
+  integer, intent(in) :: m, k, maxit
+  real(8), dimension(m) :: sn, cs
+  real(8), dimension(maxit, maxit) :: H
 
   ! Define internal variables
   integer :: i
-  real(8) :: temp, cs_k, sn_k
+  real(8) :: temp
 
-  !do i = 1,k-1
-  !  temp = cs(i) * h(i) + sn(i)*h(i+1)
-	!  h(i+1) = -sn(i)*h(i) + cs(i)*h(i+1)
-	!  h(i) = temp
+  do i = 1,k-1
 
-  !end do
+    temp = cs(i) * H(i,k) + sn(i)*H(i+1,k)
+	  H(i+1,k) = -sn(i)*H(i,k) + cs(i)*H(i+1,k)
+	  H(i,k) = temp
 
-  !call calc_rotation(h(k), h(k+1), cs_k, sn_k, k)
+  end do
 
-  !h(k) = cs_k*h(k) + sn_k*h(k+1)
-  !h(k+1) = 0.
+  call calc_rotation(H, cs, sn, m, k, maxit)
+
+  H(k,k) = cs(k)*H(k,k) + sn(k)*H(k+1,k)
+  H(k+1,k) = 0.
 
   return
-end subroutine given_rotation
+
+end subroutine givens_rotation
 
 
-subroutine calc_rotation(v1, v2, cs_k, sn_k, k)
+subroutine calc_rotation(H, cs, sn, m, k, maxit)
 
   ! Define implicit
   implicit none
 
   ! Define Input Variables
-  integer, intent(in) :: k
-  real(8), intent(in) :: v1, v2
-  real(8), intent(inout) :: cs_k, sn_k
+  integer, intent(in) :: m, k, maxit
+  real(8), dimension(m) :: cs, sn
+  real(8), dimension(maxit, maxit) :: H
 
   ! Define internal variables
-  real(8) :: t
+  real(8) :: temp
 
-  !if (v1 .eq. 0.) then
+  if (H(k,k) .eq. 0.) then
 
-  !  cs_k = 0.
-	!sn_k = 1.
+    cs(k) = 0.
+	  sn(k) = 1.
 
-  !else
+  else
 
-  !  t = (v1**2.0+v2**2.0)**(0.5)
-	!cs_k = abs(v1) / t
-	!sn_k = cs_k * v2 / v1
+    temp = (H(k,k)**2.0+H(k,k)**2.0)**(0.5)
+	  cs(k) = abs(H(k,k)) / temp
+	  sn(k) = cs(k) * H(k+1,k) / H(k,k)
 
-  !end if
+  end if
 
   return
 end subroutine calc_rotation
