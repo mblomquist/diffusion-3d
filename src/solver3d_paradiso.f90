@@ -24,8 +24,8 @@ subroutine solver3d_paradiso(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
 
   implicit none
 
-  include 'mkl.fi' 
-  include 'mkl_pardiso.f90'
+  !include 'mkl.fi'
+  !use mkl_pardiso
 
   ! Define input variables
   integer, intent(in) :: m, n, l
@@ -49,13 +49,13 @@ subroutine solver3d_paradiso(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
       do i = 1,m
 
         ! Compress stiffness matrix values
-		A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
+	      A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,2) = -As(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,3) = -Aw(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,5) = -Ae(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,6) = -An(i,j,k)
-		A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
         b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)
@@ -63,14 +63,14 @@ subroutine solver3d_paradiso(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
         ! Compress preconditioning values
         x(i+(j-1)*m+(k-1)*m*n) = phi(i,j,k)
 
-	  end do
+	    end do
     end do
   end do
 
 
 
-  call pardiso (pt, 1, 1, 11, 33, m*n*l, a, ia, ja, perm, nrhs, iparm, msglvl, b, x, error)
-  
+  !call pardiso (pt, 1, 1, 11, 33, m*n*l, a, ia, ja, perm, nrhs, iparm, msglvl, b, x, error)
+
   return
 
 end subroutine solver3d_paradiso

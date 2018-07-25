@@ -21,7 +21,7 @@
 !   tol :: on exit, this value represents the normalized residual
 
 subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
-  
+
   ! Define implicit
   implicit none
 
@@ -39,8 +39,8 @@ subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
   integer :: i, j, k, itr
   real(8), dimension(m*n*l,7) :: A_values
   integer, dimension(7) :: A_distance
-  real(8), dimension(m*n*l) :: r, r0, r1, x, p, Axp, Axs, s, Axx, b_values
-  real(8) :: alpha, omega, beta, r_norm, s_norm
+  real(8), dimension(m*n*l) :: r, rt, u, ut, c, Axx, Atut, x, b_values
+  real(8) :: rho, rho1, gamma, beta, alpha, r_norm
 
   A_distance = (/-m*n, -m, -1, 0, 1, m, m*n/)
 
@@ -50,13 +50,13 @@ subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
       do i = 1,m
 
         ! Compress stiffness matrix values
-		A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,1) = -Ab(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,2) = -As(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,3) = -Aw(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,4) = Ap(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,5) = -Ae(i,j,k)
         A_values(i+(j-1)*m+(k-1)*m*n,6) = -An(i,j,k)
-		A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
+		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
         b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)
@@ -64,13 +64,16 @@ subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
         ! Compress preconditioning values
         x(i+(j-1)*m+(k-1)*m*n) = phi(i,j,k)
 
-	  end do
+	    end do
     end do
   end do
 
   ! ================================================================= !
   ! ====================== Start BiCG Algoritm ====================== !
   ! ================================================================= !
+
+  ! Set x
+  !x = 1.
 
   ! Compute r0
   call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
@@ -90,32 +93,51 @@ subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
   do itr = 1,maxit
 
     rho = ddot(m*n*l, r, 1, rt, 1)
-	beta = -rho/rho1
-	u = r - beta * u
-	
-	call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, u, c)
 
-	ut = rt - beta * ut
+	  beta = -rho/rho1
 
-	gamma = ddot(m*n*l, c, 1, rt, 1)
+	  u = r - beta * u
 
-	alpha = rho / gamma
+	  call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, u, c)
 
-	x = x + alpha * u
-	r = r - alpha * c
+	  ut = rt - beta * ut
 
-	r_norm = dnrm2(m*n*l, r, 1)
+	  gamma = ddot(m*n*l, c, 1, rt, 1)
 
-	if (r_norm .le. tol) then
+	  alpha = rho / gamma
 
-	  return
+	  x = x + alpha * u
 
-	end if
+	  r = r - alpha * c
 
-	call mkl_ddiagemv('Y', m*n*l, A_values, m*n*l, A_distance, 7, ut, Atut)
-	rt = rt - alpha * Atut
+	  r_norm = dnrm2(m*n*l, r, 1)
 
-	rho1 = rho
+    print *, "r_norm:", r_norm
+
+	  if (r_norm .le. tol) then
+
+      print *, 'BiCG Algorithm successfully converged!'
+      print *, 'Number of Iterations: ', itr
+      print *, 'Relative residual: ', r_norm
+
+      ! Update phi with the solution
+      do k = 1,l
+        do j = 1,n
+          do i = 1,m
+            phi(i,j,k) = x(i+(j-1)*m+(k-1)*m*n)
+        end do
+        end do
+      end do
+
+	    return
+
+	  end if
+
+	  call mkl_ddiagemv('T', m*n*l, A_values, m*n*l, A_distance, 7, ut, Atut)
+
+	  rt = rt - alpha * Atut
+
+	  rho1 = rho
 
   end do
 

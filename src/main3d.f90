@@ -62,7 +62,7 @@ program main3d
   elseif (solver .eq. 2) then
     call solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
   elseif (solver .eq. 3) then
-    call solver3d_paradiso(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
+    call solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
   else
     call solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
   end if
