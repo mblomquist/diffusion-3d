@@ -14,7 +14,7 @@ program main3d
 
   ! Define Internal Variables
   real(8) :: start_time, end_time
-  integer :: i, j, k
+  integer :: i, j, k, fault
 
   ! Initialize Problem
   call initialize3d
@@ -60,7 +60,23 @@ program main3d
   elseif (solver .eq. 1) then
     call solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
   elseif (solver .eq. 2) then
-    call solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
+
+    fault = 0
+
+    do i = 3,maxit
+
+      if (fault .eq. 0) then
+
+        call solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, i, fault)
+
+        if (fault .eq. 0) then
+          print *, "Restarting GMRES."
+        end if
+
+      end if
+
+    end do
+
   elseif (solver .eq. 3) then
     call solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
   else

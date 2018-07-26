@@ -20,7 +20,7 @@
 !   maxit :: on exit, this value contains the number of iterations of the bicg algorithm
 !   tol :: on exit, this value represents the normalized residual
 
-subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
+subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit, fault)
 
   ! Define implicit
   implicit none
@@ -31,6 +31,7 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! Define input variables
   integer, intent(in) :: m, n, l
   integer, intent(in) :: maxit
+  integer, intent(inout) :: fault
   real(8), intent(in) :: tol
   real(8), dimension(m,n,l), intent(in) :: As, Aw, Ap, Ae, An, Ab, At, b
   real(8), dimension(m,n,l), intent(inout) :: phi
@@ -44,17 +45,19 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! Define internal variables :: GMRES
 
   real(8) :: b_norm, err, r_norm, mult1, temp_tri_sol
-  real(8), dimension(m*n*l) :: r, Axx, x, e1, Qy
-  real(8), dimension(maxit) :: sn, cs, y
-  real(8), dimension(maxit+1) :: beta
-  real(8), dimension(m*n*l, maxit) :: Q
-  real(8), dimension(maxit, maxit) :: H
+  real(8), dimension(m*n*l) :: r, Axx, x, e1, Qy, beta
+  real(8), dimension(maxit) :: sn, cs, y, cs2, sn2
+  real(8), dimension(m*n*l, maxit+1) :: Q
+  real(8), dimension(maxit+1, maxit) :: H
 
 
 
   ! ================================================================= !
   ! ==================== Start Matrix Conversion ==================== !
   ! ================================================================= !
+
+  ! Set fault
+  fault = 0
 
   ! Define distance between diagonals
   A_distance = (/-m*n, -m, -1, 0, 1, m, m*n/)
@@ -76,7 +79,7 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
 		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
-        b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k) !+1.0e-8
+        b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)
 
         ! Compress preconditioning values
         x(i+(j-1)*m+(k-1)*m*n) = phi(i,j,k)
@@ -92,6 +95,9 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! ================================================================= !
   ! ====================== Start GMRES Algoritm ===================== !
   ! ================================================================= !
+
+  ! Set x = 1
+  !x = 1.
 
   ! Compute residual vector
   call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
@@ -121,25 +127,39 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! Start GMRES Loop
   do k = 1,maxit
 
+
+    cs2 = cs
+    sn2 = sn
+
     ! Run Arnoldi Loop
 	  call arnoldi(A_values, A_distance, Q, H, m*n*l, k, maxit)
 
 	  ! Eliminate the last element in H ith row and update rotation matrix
-	  call givens_rotation(H, cs, sn, m*n*l, k, maxit)
+	  call givens_rotation(H, cs2, sn2, m*n*l, k, maxit)
+
+    cs = cs2
+    sn = sn2
 
 	  ! Update the residual vector
 	  beta(k+1) = -sn(k) * beta(k)
 	  beta(k) = cs(k) * beta(k)
 	  err = abs(beta(k+1)) / b_norm
 
-    print *, "err:", err
-
 	  if (err .le. tol) then
 
       y(1:k) = beta(1:k)
 
-      call dtrsv('L', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
-	    call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, Qy, 1)
+      call dtrsv('U', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
+
+      Qy = 0.
+
+      do i = 1,m*n*l
+        do j = 1,k
+
+          Qy(i) = Qy(i) + Q(i,j)*y(j)
+
+        end do
+      end do
 
       x = x + Qy
 
@@ -150,6 +170,11 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
           end do
         end do
       end do
+
+      print *, 'GMRES Algorithm successfully converged!'
+      print *, 'Number of Iterations: ', k
+      print *, 'Relative residual: ', err
+      fault = 1
 
       return
 
@@ -157,8 +182,17 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
 
       y(1:k) = beta(1:k)
 
-      call dtrsv('L', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
-      call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, Qy, 1)
+      call dtrsv('U', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
+
+      Qy = 0.
+
+      do i = 1,m*n*l
+        do j = 1,k
+
+          Qy(i) = Qy(i) + Q(i,j)*y(j)
+
+        end do
+      end do
 
       x = x + Qy
 
@@ -169,6 +203,11 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
           end do
         end do
       end do
+
+      print *, 'GMRES Algorithm did not converge!'
+      print *, 'Number of Iterations: ', k
+      print *, 'Relative residual: ', err
+      fault = 0
 
       return
 
@@ -199,8 +238,8 @@ subroutine arnoldi(A_values, A_distance, Q, H, m, k, maxit)
   integer, intent(in) :: m, k, maxit
   integer, dimension(7) :: A_distance
   real(8), dimension(m,7) :: A_values
-  real(8), dimension(m,maxit) :: Q
-  real(8), dimension(maxit,maxit) :: H
+  real(8), dimension(m,maxit+1) :: Q
+  real(8), dimension(maxit+1,maxit) :: H
 
   ! Define internal variables
   integer :: i
@@ -230,8 +269,8 @@ subroutine givens_rotation(H, cs, sn, m, k, maxit)
 
   ! Define input variables
   integer, intent(in) :: m, k, maxit
-  real(8), dimension(m) :: sn, cs
-  real(8), dimension(maxit, maxit) :: H
+  real(8), dimension(maxit) :: sn, cs
+  real(8), dimension(maxit+1, maxit) :: H
 
   ! Define internal variables
   integer :: i
@@ -240,6 +279,7 @@ subroutine givens_rotation(H, cs, sn, m, k, maxit)
   do i = 1,k-1
 
     temp = cs(i) * H(i,k) + sn(i)*H(i+1,k)
+
 	  H(i+1,k) = -sn(i)*H(i,k) + cs(i)*H(i+1,k)
 	  H(i,k) = temp
 
@@ -262,8 +302,8 @@ subroutine calc_rotation(H, cs, sn, m, k, maxit)
 
   ! Define Input Variables
   integer, intent(in) :: m, k, maxit
-  real(8), dimension(m) :: cs, sn
-  real(8), dimension(maxit, maxit) :: H
+  real(8), dimension(maxit) :: cs, sn
+  real(8), dimension(maxit+1, maxit) :: H
 
   ! Define internal variables
   real(8) :: temp
@@ -275,7 +315,7 @@ subroutine calc_rotation(H, cs, sn, m, k, maxit)
 
   else
 
-    temp = (H(k,k)**2.0+H(k,k)**2.0)**(0.5)
+    temp = (H(k,k)**2.0+H(k+1,k)**2.0)**(0.5)
 	  cs(k) = abs(H(k,k)) / temp
 	  sn(k) = cs(k) * H(k+1,k) / H(k,k)
 

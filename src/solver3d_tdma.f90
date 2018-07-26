@@ -167,187 +167,12 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 	end do
 
 	! =================== Check Solution ================== !
-	do i = 1,m
-	  do j = 1,n
-	    do k = 1,l
+  r = 0.
 
-		  if (i .eq. 1) then
-			if (j .eq. 1) then
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			elseif (j .eq. n) then
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			else
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			end if
-		  elseif (i .eq. m) then
-			if (j .eq. 1) then
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			elseif (j .eq. n) then
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			else
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			end if
-		  else
-			if (j .eq. 1) then
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			elseif (j .eq. n) then
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  end if
-			else
-			  if (k .eq. 1) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 At(i,j,k)*phi(i,j,k+1)+ &
-				                                 b(i,j,k))
-			  elseif (k .eq. l) then
-			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
-				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
-				                                 As(i,j,k)*phi(i,j-1,k)+ &
-				                                 An(i,j,k)*phi(i,j+1,k)+ &
-				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
-				                                 b(i,j,k))
-			  else
+	do i = 2,m-1
+	  do j = 2,n-1
+	    do k = 2,l-1
+
 			    r(i,j,k) = Ap(i,j,k)*phi(i,j,k)-(Aw(i,j,k)*phi(i-1,j,k)+ &
 				                                 Ae(i,j,k)*phi(i+1,j,k)+ &
 				                                 As(i,j,k)*phi(i,j-1,k)+ &
@@ -355,9 +180,6 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 				                                 Ab(i,j,k)*phi(i,j,k-1)+ &
 				                                 At(i,j,k)*phi(i,j,k+1)+ &
 				                                 b(i,j,k))
-			  end if
-			end if
-		  end if
 
         end do
       end do
@@ -365,13 +187,15 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 	r_sum = 0.
 
-	do i = 1,m
-	  do j = 1,n
-	    do k = 1,l
-		  r_sum = r_sum + abs(r(i,j,k))
-		end do
+	do i = 2,m-1
+	  do j = 2,n-1
+	    do k = 2,l-1
+		    r_sum = r_sum + (r(i,j,k))**2.0
+		  end do
 	  end do
 	end do
+
+  r_sum = r_sum**(0.5)
 
 	if (r_sum .le. tol) then
 	  print *, "TDMA Compelete."
