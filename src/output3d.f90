@@ -17,7 +17,7 @@ subroutine output3d
 
   write(2, *), 'TITLE = "Example: Simple 3D Volume Data"'
   write(2, *), 'VARIABLES = "X", "Y", "Z", "Temperature"'
-  write(2, *), 'ZONE I=10, J=10, K=10, DATAPACKING=POINT'
+  write(2, *), 'ZONE I=5, J=5, K=5, DATAPACKING=POINT'
 
   do k = 1,l
     do j = 1,n

@@ -36,18 +36,19 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   real(8), dimension(m,n,l), intent(inout) :: phi
 
   ! Define internal variables :: Matrix Conversion
-  integer :: i, j, k
+  integer :: i, j, k, ii, jj, kk
   real(8), dimension(m*n*l,7) :: A_values
   integer, dimension(7) :: A_distance
   real(8), dimension(m*n*l) :: b_values
 
   ! Define internal variables :: GMRES
 
-  real(8) :: b_norm, err, r_norm, mult1
-  real(8), dimension(m*n*l) :: r, Axx, x, y, e1
-  real(8), dimension(maxit+1) :: beta, diag, sn, cs
+  real(8) :: b_norm, err, r_norm, mult1, temp_tri_sol
+  real(8), dimension(m*n*l) :: r, Axx, x, e1, Qy
+  real(8), dimension(maxit) :: sn, cs, y
+  real(8), dimension(maxit+1) :: beta
   real(8), dimension(m*n*l, maxit) :: Q
-  real(8), dimension(maxit+1, maxit+1) :: H
+  real(8), dimension(maxit, maxit) :: H
 
 
 
@@ -75,7 +76,7 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
 		    A_values(i+(j-1)*m+(k-1)*m*n,7) = -At(i,j,k)
 
         ! Compress right-hand side values
-        b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k)+1.0e-8
+        b_values(i+(j-1)*m+(k-1)*m*n) = b(i,j,k) !+1.0e-8
 
         ! Compress preconditioning values
         x(i+(j-1)*m+(k-1)*m*n) = phi(i,j,k)
@@ -137,15 +138,18 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
 
       y(1:k) = beta(1:k)
 
-      print *, "beta:", beta
+      call dtrsv('L', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
+	    call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, Qy, 1)
 
-	    call dtrsv('U', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
+      x = x + Qy
 
-      print *, "y:", y
-
-	    call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, x, 1)
-
-      print *, "x:", x
+      do kk = 1,l
+        do jj = 1,n
+          do ii = 1,m
+            phi(ii,jj,kk) = x(ii+(jj-1)*m+(kk-1)*m*n)
+          end do
+        end do
+      end do
 
       return
 
@@ -153,8 +157,18 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
 
       y(1:k) = beta(1:k)
 
-	    call dtrsv('U', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
-	    call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, x, 1)
+      call dtrsv('L', 'N', 'N', k, H(1:k,1:k), k, y(1:k), 1)
+      call dgemv('N', m*n*l, k, mult1, Q(:,1:k), m*n*l, y(1:k), 1, mult1, Qy, 1)
+
+      x = x + Qy
+
+      do kk = 1,l
+        do jj = 1,n
+          do ii = 1,m
+            phi(ii,jj,kk) = x(ii+(jj-1)*m+(kk-1)*m*n)
+          end do
+        end do
+      end do
 
       return
 
@@ -166,13 +180,7 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! ======================== End GMRES Algoritm ===================== !
   ! ================================================================= !
 
-  do k = 1,l
-    do j = 1,n
-      do i = 1,m
-        phi(i,j,k) = x(i+(j-1)*m+(k-1)*m*n)
-      end do
-    end do
-  end do
+
 
   return
 
