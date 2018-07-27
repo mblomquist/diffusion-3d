@@ -20,7 +20,7 @@
 !   maxit :: on exit, this value contains the number of iterations of the bicg algorithm
 !   tol :: on exit, this value represents the normalized residual
 
-subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit, fault)
+subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit, fault, res_vec)
 
   ! Define implicit
   implicit none
@@ -31,13 +31,14 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
   ! Define input variables
   integer, intent(in) :: m, n, l
   integer, intent(in) :: maxit
+  real(8), dimension(maxit), intent(inout) :: res_vec
   integer, intent(inout) :: fault
   real(8), intent(in) :: tol
   real(8), dimension(m,n,l), intent(in) :: As, Aw, Ap, Ae, An, Ab, At, b
   real(8), dimension(m,n,l), intent(inout) :: phi
 
   ! Define internal variables :: Matrix Conversion
-  integer :: i, j, k, ii, jj, kk
+  integer :: i, j, k, ii, jj, kk, itr_init
   real(8), dimension(m*n*l,7) :: A_values
   integer, dimension(7) :: A_distance
   real(8), dimension(m*n*l) :: b_values
@@ -58,6 +59,13 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
 
   ! Set fault
   fault = 0
+
+  ! Set input integer
+  itr_init = 0
+
+  do i = maxit-1, 3, -1
+    itr_init = itr_init + i
+  end do
 
   ! Define distance between diagonals
   A_distance = (/-m*n, -m, -1, 0, 1, m, m*n/)
@@ -144,6 +152,8 @@ subroutine solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxi
 	  beta(k+1) = -sn(k) * beta(k)
 	  beta(k) = cs(k) * beta(k)
 	  err = abs(beta(k+1)) / b_norm
+
+    res_vec(itr_init+k) = err
 
 	  if (err .le. tol) then
 

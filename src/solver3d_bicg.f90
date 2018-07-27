@@ -20,7 +20,7 @@
 !   maxit :: on exit, this value contains the number of iterations of the bicg algorithm
 !   tol :: on exit, this value represents the normalized residual
 
-subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
+subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit, res_vec)
 
   ! Define implicit
   implicit none
@@ -31,6 +31,7 @@ subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
   ! Define input variables
   integer, intent(in) :: m, n, l
   integer, intent(in) :: maxit
+  real(8), dimension(maxit), intent(inout) :: res_vec
   real(8), intent(in) :: tol
   real(8), dimension(m,n,l), intent(in) :: As, Aw, Ap, Ae, An, Ab, At, b
   real(8), dimension(m,n,l), intent(inout) :: phi
@@ -111,8 +112,10 @@ subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 	  r = r - alpha * c
 
 	  r_norm = dnrm2(m*n*l, r, 1)
+    res_vec(itr) = r_norm
 
-    print *, "r_norm:", r_norm
+    print *, 'Iteration: ', itr
+    print *, 'Relative residual: ', r_norm
 
 	  if (r_norm .le. tol) then
 
@@ -131,6 +134,10 @@ subroutine solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
 	    return
 
+    elseif (itr .eq. maxit) then
+      print *, 'BiCG Algorithm did not converge!'
+      print *, 'Number of Iterations: ', itr
+      print *, 'Relative residual: ', r_norm
 	  end if
 
 	  call mkl_ddiagemv('T', m*n*l, A_values, m*n*l, A_distance, 7, ut, Atut)

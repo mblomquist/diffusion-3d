@@ -20,7 +20,7 @@
 !   maxit :: on exit, this value contains the number of iterations of the BiCGStab algorithm
 !   tol :: on exit, this value represents the normalized residual
 
-subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
+subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit, res_vec)
 
   ! Define implicit
   implicit none
@@ -31,6 +31,7 @@ subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
   ! Define input variables
   integer, intent(in) :: m, n, l
   integer, intent(in) :: maxit
+  real(8), dimension(maxit), intent(inout) :: res_vec
   real(8), intent(in) :: tol
   real(8), dimension(m,n,l), intent(in) :: As, Aw, Ap, Ae, An, Ab, At, b
   real(8), dimension(m,n,l), intent(inout) :: phi
@@ -114,8 +115,10 @@ subroutine solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, m
     r = r1
 
     ! Check convergence of BiCG
-    call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
-	  r_norm = abs(dnrm2(m*n*l, b_values-Axx, 1))
+    !call mkl_ddiagemv('N', m*n*l, A_values, m*n*l, A_distance, 7, x, Axx)
+	  !r_norm = abs(dnrm2(m*n*l, b_values-Axx, 1))
+    r_norm = abs(dnrm2(m*n*l, r, 1))
+    res_vec(itr) = r_norm
 
     if (r_norm < tol) then
         print *, 'BiCGStab Algorithm successfully converged!'

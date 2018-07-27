@@ -41,3 +41,6 @@
 
   real(8) :: solver_tol
   common solver_tol
+
+  real(8), dimension(100000) :: res_vec
+  common res_vec

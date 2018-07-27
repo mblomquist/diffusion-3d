@@ -31,6 +31,21 @@ subroutine output3d
 
   close(2)
 
+  ! Write field data to file
+  open(unit=5, file="output/output3d_res_vec.dat")
+
+  write(5, *), 'TITLE = "Residual Error Vector"'
+
+  do k = 1,maxit
+
+    if (res_vec(k) .ne. 0.) then
+      write(5, *), res_vec(k)
+    end if
+
+  end do
+
+  close(5)
+
   return
 
 end subroutine

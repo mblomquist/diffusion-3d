@@ -6,9 +6,10 @@
 ! This program solves a three-dimensional discretization problem utilizing a line-by-line
 ! TDMA (tri-diagonal matrix algorithm).
 !
-subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit)
+subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit, res_vec)
 
   integer, intent(in) :: m, n, l, maxit
+  real(8), dimension(maxit), intent(inout) :: res_vec
   real(8), dimension(m,n,l), intent(in) :: Aw, Ae, As, An, At, Ab, Ap, b
   real(8), dimension(m,n,l), intent(inout) :: phi
 
@@ -197,6 +198,8 @@ subroutine solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, phi, m, n, l, tol, maxit
 
   r_sum = r_sum**(0.5)
 
+  res_vec(itr) = r_sum
+  
 	if (r_sum .le. tol) then
 	  print *, "TDMA Compelete."
     print *, "r_sum:", r_sum

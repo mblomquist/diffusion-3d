@@ -51,14 +51,16 @@ program main3d
   !  end do
   !end do
 
+  res_vec = 0.
+
   ! Start Timer
   call cpu_time(start_time)
 
   ! Solve Diffusion Problem
   if (solver .eq. 0) then
-    call solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
+    call solver3d_bicgstab(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit, res_vec)
   elseif (solver .eq. 1) then
-    call solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
+    call solver3d_bicgstab2(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit, res_vec)
   elseif (solver .eq. 2) then
 
     fault = 0
@@ -67,7 +69,7 @@ program main3d
 
       if (fault .eq. 0) then
 
-        call solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, i, fault)
+        call solver3d_gmres(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, i, fault, res_vec)
 
         if (fault .eq. 0) then
           print *, "Restarting GMRES."
@@ -78,9 +80,9 @@ program main3d
     end do
 
   elseif (solver .eq. 3) then
-    call solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
+    call solver3d_bicg(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit, res_vec)
   else
-    call solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit)
+    call solver3d_tdma(Ab, As, Aw, Ap, Ae, An, At, b, T, m, n, l, solver_tol, maxit, res_vec)
   end if
 
   ! Stop Timer
